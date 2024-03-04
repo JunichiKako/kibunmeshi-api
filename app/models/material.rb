@@ -1,3 +1,2 @@
 class Material < ApplicationRecord
-  belongs_to :recipe
-end
+  belongs_to :recipe, dependent: :destroy
