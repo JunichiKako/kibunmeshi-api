@@ -1,0 +1,138 @@
+.recipe_header {
+    max-width: 700px;
+    margin: 0 auto;
+    padding-top: 90px;
+    margin-bottom: 12px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+}
+
+.recipe_title {
+    font-size: 1.75rem;
+    font-weight: 500;
+}
+
+.category_title {
+    color: #000;
+    padding: 6px;
+    border-radius: 5px;
+}
+
+.thumbnail {
+    max-width: 700px !important;
+    margin: 0 auto !important;
+}
+
+.thumbnail_img {
+    border-radius: 8px;
+    aspect-ratio: 15 / 9;
+    object-fit: cover;
+}
+
+.recipe_material {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.material_title {
+    display: inline-block;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    font-size: 20px;
+    border-bottom: 1px solid #dfdfdf;
+}
+
+.material_item {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    padding: 16px;
+}
+
+.material_item::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #dfdfdf;
+}
+
+/* 最後の.material_itemの:before疑似要素にスタイルを適用しない */
+/* .material_item:last-child::before {
+    content: none;
+} */
+
+.recipe_step {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.step_title {
+    display: inline-block;
+    margin-top: 30px;
+    margin-bottom: 20px;
+    font-size: 20px;
+    border-bottom: 1px solid #dfdfdf;
+}
+
+.step_list {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 18px 0;
+
+    position: relative;
+}
+
+.step_list::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #dfdfdf;
+    border-radius: 8px;
+}
+
+.step_content_mark {
+    background-color: #f3bb01;
+    color: #fff;
+    padding: 8px;
+    margin-right: 20px;
+    flex-shrink: 0;
+    border-radius: 5px;
+}
+
+@media screen and (max-width: 768px) {
+    .recipe_header {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .recipe_title {
+        font-size: 1.5rem;
+    }
+
+    .thumbnail {
+        max-width: 100%;
+    }
+
+    .material_title {
+        margin: 30px auto 0 auto;
+        font-size: 20px;
+    }
+
+    .recipe_material {
+        max-width: 100%;
+    }
+
+    .recipe_step {
+        max-width: 100%;
+    }
+}
