@@ -19,6 +19,7 @@ export interface Category {
     name: string;
     createdAt: string;
     updatedAt: string;
+    recipes: Recipe[];
 }
 
 export interface Recipe {

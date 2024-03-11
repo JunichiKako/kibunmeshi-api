@@ -1,23 +1,14 @@
 "use client";
+
 // Components
-import React from "react";
+import React, { useEffect, useState } from "react";
 import CategoryList from "./_components/CategoryList/CategoryList";
 import SearchRecipe from "./_components/SearchRecipe/SearchRecipe";
 import Loading from "./_components/Loading/Loading";
-import { useEffect, useState } from "react";
 import Image from "next/image";
 import styles from "./Home.module.css";
 import { Recipe } from "./types/recipe";
 import Link from "next/link";
-
-// レシピデータをフェッチする関数
-async function fetchRecipes() {
-    const res = await fetch("http://localhost:3000/api/recipes");
-    if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-    }
-    return await res.json();
-}
 
 // レシピページコンポーネント
 export default function RecipesPage() {
@@ -26,8 +17,33 @@ export default function RecipesPage() {
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
-        fetchRecipes().then(setRecipes).catch(setError);
+        async function fetchRecipes() {
+            try {
+                const response = await fetch(
+                    "http://localhost:3000/api/recipes"
+                );
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                setRecipes(data);
+            } catch (error) {
+                setError(
+                    error instanceof Error
+                        ? error
+                        : new Error("An error occurred")
+                );
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchRecipes();
     }, []);
+
+    if (loading) {
+        return <Loading />;
+    }
 
     if (error) {
         return <div>Error: {error.message}</div>;

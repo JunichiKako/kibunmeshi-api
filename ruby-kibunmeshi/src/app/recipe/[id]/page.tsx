@@ -2,70 +2,49 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { Recipe } from "../../types/recipe";
-import Loading from "@/app/_components/Loading/Loading";
 import Image from "next/image";
+import Loading from "../../_components/Loading/Loading";
+import { Recipe } from "../../types/recipe";
 import styles from "./Recipe_detail.module.css";
-import { supabase } from "../../../utils/supabase";
 
 export default function RecipeDetail() {
     const [recipe, setRecipe] = useState<Recipe | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
 
-    const [thumbnailImageUrl, setThumbnailImageUrl] = useState<null | string>(
-        null
-    );
-
     const { id } = useParams();
 
     useEffect(() => {
         async function fetchRecipe() {
             try {
-                if (!id) return; // idがない場合は早期リターン
-                const response = await fetch(`/api/recipes/${id}`); // APIのURLを修正
+                if (!id) return;
+                const response = await fetch(
+                    `http://localhost:3000/api/recipes/${id}`
+                );
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const data = await response.json();
-                setRecipe(data.recipe);
+                setRecipe(data);
             } catch (error) {
                 setError(
                     error instanceof Error
                         ? error
                         : new Error("An error occurred")
                 );
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         }
 
-        fetchRecipe();
+        if (id) {
+            fetchRecipe();
+        }
     }, [id]);
 
-    // DBに保存しているthumbnailImageKeyを元に、Supabaseから画像のURLを取得する
-    useEffect(() => {
-        if (!recipe?.thumbnailImageKey) return;
-
-        const fetcher = async () => {
-            const {
-                data: { publicUrl },
-            } = await supabase.storage
-                .from("recipe_thumbnail")
-                .getPublicUrl(recipe.thumbnailImageKey);
-
-            setThumbnailImageUrl(publicUrl);
-        };
-        fetcher();
-    }, [recipe?.thumbnailImageKey]);
-
-    if (loading) {
-        return <Loading />;
-    }
-
-    if (error) {
-        return <div>Error: {error.message}</div>;
-    }
-
-    if (!recipe) {
-        return <div>Recipe not found</div>;
-    }
+    if (loading) return <Loading />;
+    if (error) return <div>Error: {error.message}</div>;
+    if (!recipe) return <div>Recipe not found</div>;
 
     // カテゴリタイトルに基づく背景色のマッピング
     const categoryStyles: {
@@ -79,7 +58,7 @@ export default function RecipeDetail() {
 
     return (
         <div>
-            <div className={styles.recipe_header}>
+            <header className={styles.recipe_header}>
                 <h2 className={styles.recipe_title}>{recipe.title}</h2>
                 <div
                     className={styles.category_title}
@@ -87,52 +66,45 @@ export default function RecipeDetail() {
                 >
                     {recipe.category.name}
                 </div>
-            </div>
+            </header>
 
-            {thumbnailImageUrl && (
+            {recipe.thumbnail_url && (
                 <div className={styles.thumbnail}>
                     <Image
-                        src={thumbnailImageUrl}
-                        alt={recipe.title || "Recipe image"}
+                        src={recipe.thumbnail_url}
+                        alt={`${recipe.title}の画像`}
+                        className={styles.thumbnail_img}
                         width={700}
                         height={390}
-                        className={styles.thumbnail_img}
-                        priority={true}
                     />
                 </div>
             )}
-            <div className={styles.recipe_material}>
-                <p className={styles.material_title}>材料・分量</p>
-                <ul className="material-list">
+
+            <section className={styles.recipe_material}>
+                <h3 className={styles.material_title}>材料・分量</h3>
+                <ul>
                     {recipe.materials.map((material, index) => (
                         <li key={index} className={styles.material_item}>
-                            <div className="material-name">{material.name}</div>
-                            <div className="material-quantity">
-                                {material.quantity}
-                            </div>
+                            <span>{material.name}</span>
+                            <span>{material.quantity}</span>
                         </li>
                     ))}
                 </ul>
-            </div>
+            </section>
 
-            <div className={styles.recipe_step}>
-                <p className={styles.step_title}>作り方</p>
+            <section className={styles.recipe_step}>
+                <h3 className={styles.step_title}>作り方</h3>
                 <ol>
-                    {recipe.howTos.map((howTo, index) => (
+                    {recipe.how_tos.map((step, index) => (
                         <li key={index} className={styles.step_list}>
-                            <div className={styles.step_content_mark}>
+                            <span className={styles.step_content_mark}>
                                 {index + 1}
-                            </div>
-                            <div
-                                className="step-content-text"
-                                dangerouslySetInnerHTML={{
-                                    __html: howTo.text || "",
-                                }}
-                            />
+                            </span>
+                            <p>{step.text}</p>
                         </li>
                     ))}
                 </ol>
-            </div>
+            </section>
         </div>
     );
 }

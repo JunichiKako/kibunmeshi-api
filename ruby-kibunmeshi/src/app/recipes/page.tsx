@@ -6,7 +6,6 @@ import Loading from "../_components/Loading/Loading";
 import { Recipe } from "../types/recipe";
 import Image from "next/image";
 import styles from "./Recipes.module.css";
-import { supabase } from "../../utils/supabase";
 
 export default function Recipes() {
     const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -15,21 +14,17 @@ export default function Recipes() {
     const [currentPage, setCurrentPage] = useState(1);
     const recipesPerPage = 9; // 1ページあたりのレシピ数
 
-    // レシピIDをキー、サムネイル画像URLを値とするオブジェクトの状態を用意
-    const [thumbnailImageUrl, setThumbnailImageUrl] = useState<{
-        [key: number]: string;
-    }>({});
-
     useEffect(() => {
         async function fetchData() {
             try {
                 const response = await fetch(
-                    `/api/recipes?limit=${recipesPerPage}&offset=${
-                        (currentPage - 1) * recipesPerPage
-                    }`
-                );
+                    `http://localhost:3000/api/recipes?page=${currentPage}&per_page=${recipesPerPage}`
+                ); // Rails APIのページネーションパラメータを適切に調整
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const data = await response.json();
-                setRecipes(data);
+                setRecipes(data); // この行でRails APIから受け取ったデータを設定
                 setLoading(false);
             } catch (error) {
                 setError(error as Error);
@@ -40,56 +35,20 @@ export default function Recipes() {
         fetchData();
     }, [currentPage]);
 
-    // DBに保存しているthumbnailImageKeyを元に、Supabaseから画像のURLを取得する
-    useEffect(() => {
-        async function fetchRecipeImages() {
-            const urlPromises = recipes.map(async (recipe) => {
-                if (recipe.thumbnailImageKey) {
-                    const { data } = supabase.storage
-                        .from("recipe_thumbnail")
-                        .getPublicUrl(recipe.thumbnailImageKey);
-
-                    if (!error && data) {
-                        // 注意: newImageUrls[recipe.id] への代入はここでは行わない
-                        return { id: recipe.id, url: data.publicUrl };
-                    }
-                }
-                return { id: recipe.id, url: null };
-            });
-
-            const urls = await Promise.all(urlPromises);
-            const newImageUrls = urls.reduce(
-                (acc, curr) => {
-                    if (curr.url) acc[curr.id] = curr.url; // nullでないURLのみを状態に追加
-                    return acc;
-                },
-                { ...thumbnailImageUrl }
-            );
-
-            setThumbnailImageUrl(newImageUrls);
-        }
-
-        if (recipes.length > 0) {
-            fetchRecipeImages();
-        }
-    }, [recipes, error, thumbnailImageUrl]);
-
     if (loading) {
         return <Loading />;
     }
 
     if (error) {
-        return <div>Error</div>;
+        return <div>Error: {error.message}</div>;
     }
 
-    // 次のページへ移動したときにページのトップにスクロール
     const handlePageChange = (newPage: number) => {
         setCurrentPage(newPage);
         window.scrollTo(0, 0);
     };
 
-    // ページネーション
-    const renderPagiantion = () => {
+    const renderPagination = () => {
         return (
             <div className={styles.pagination}>
                 {currentPage > 1 && (
@@ -116,26 +75,27 @@ export default function Recipes() {
     return (
         <div>
             <div className={styles.recipes_title}>#レシピ一覧</div>
-            <div className="new-content grid">
+            <div className="grid">
                 {recipes.map((recipe) => (
                     <div key={recipe.id} className="item">
                         <Link href={`/recipe/${recipe.id}`}>
-                            {thumbnailImageUrl && (
-                                <Image
-                                    src={thumbnailImageUrl[recipe.id]}
-                                    alt={recipe.title}
-                                    width={300}
-                                    height={200}
-                                    priority={true}
-                                    style={{ objectFit: "cover" }}
-                                />
-                            )}
-                            <p>{recipe.title}</p>
+                                {recipe.thumbnail_url && (
+                                    <Image
+                                        src={recipe.thumbnail_url}
+                                        alt={recipe.title}
+                                        width={300}
+                                        height={200}
+                                        priority={true}
+                                        style={{ objectFit: "cover" }}
+                                        className={styles.recipe_image}
+                                    />
+                                )}
+                                <p>{recipe.title}</p>
                         </Link>
                     </div>
                 ))}
             </div>
-            {renderPagiantion()}
+            {renderPagination()}
         </div>
     );
 }

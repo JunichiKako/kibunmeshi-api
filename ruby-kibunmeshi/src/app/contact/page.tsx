@@ -7,14 +7,7 @@ const Contact = () => {
     const [name, setName] = useState<string>("");
     const [email, setEmail] = useState<string>("");
     const [message, setMessage] = useState<string>("");
-    const [showConfirmModal, setShowConfirmModal] = useState(false);
-
-    // 同じく、フォームの内容をクリアする関数
-    const clearForm = () => {
-        setName("");
-        setEmail("");
-        setMessage("");
-    };
+    const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -23,23 +16,25 @@ const Contact = () => {
 
     const handleConfirmSubmit = async () => {
         try {
-            // APIキーのチェックは不要になるため削除します
-
-            // 環境変数の値をチェックする部分を削除し、
-            // Next.jsのAPIルートにリクエストを送信するように変更します。
-            const response = await fetch("/api/contact", {
+            const response = await fetch("http://localhost:3000/api/contacts", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ name, email, message }),
+                body: JSON.stringify({
+                    contact: {
+                        name,
+                        email,
+                        message,
+                    },
+                }),
             });
 
             if (response.ok) {
                 alert("お問い合わせが正常に送信されました。");
-                clearForm(); // フォームの内容をクリア
+                clearForm();
             } else {
-                const errorData = await response.json(); // エラーレスポンスの内容を取得
+                const errorData = await response.json();
                 alert(
                     `送信に失敗しました。${
                         errorData.message || "再度お試しください。"
@@ -47,10 +42,17 @@ const Contact = () => {
                 );
             }
         } catch (error) {
-            console.error(error); // エラー内容をコンソールに出力
+            console.error(error);
             alert("エラーが発生しました。再度お試しください。");
+        } finally {
+            setShowConfirmModal(false);
         }
-        setShowConfirmModal(false); // モーダルを閉じる
+    };
+
+    const clearForm = () => {
+        setName("");
+        setEmail("");
+        setMessage("");
     };
 
     return (
@@ -107,20 +109,23 @@ const Contact = () => {
                         送信
                     </button>
                 </form>
-                {/* モーダル */}
                 {showConfirmModal && (
                     <div className={styles.modal_overlay}>
-                        {" "}
-                        {/* オーバーレイの追加 */}
                         <div className={styles.confirm_modal}>
                             <h2>内容確認</h2>
                             <p>名前: {name}</p>
                             <p>メールアドレス: {email}</p>
                             <p>メッセージ: {message}</p>
-                            <button onClick={handleConfirmSubmit}>
+                            <button
+                                onClick={handleConfirmSubmit}
+                                className={styles.confirm_btn}
+                            >
                                 確認して送信
                             </button>
-                            <button onClick={() => setShowConfirmModal(false)}>
+                            <button
+                                onClick={() => setShowConfirmModal(false)}
+                                className={styles.cancel_btn}
+                            >
                                 キャンセル
                             </button>
                         </div>
